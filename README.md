@@ -192,6 +192,73 @@ Tools like TuneFab or similar software that directly decrypt FairPlay-protected 
 | **RadioTape (loopback)** | **No** | **Low** | **Recording what comes out of the speaker** |
 | Buying CDs & ripping | No | None | Owning the key |
 
+## Alternatives
+
+### Loopback recording tools (same approach as RadioTape)
+
+These tools capture post-decryption audio output — no DRM circumvention.
+
+| Tool | OS | Language | Services | Auto-split | Tags | Price |
+|---|---|---|---|---|---|---|
+| **RadioTape** | macOS | Python | Apple Music | Yes | Yes | Free |
+| [Audio Hijack](https://rogueamoeba.com/audiohijack/) | macOS | Proprietary | Any app | Yes | Yes | $69 |
+| [Piezo](https://rogueamoeba.com/piezo/) | macOS | Proprietary | Any app | No | No | $29 |
+| [Spytify](https://github.com/jwallet/spy-spotify) | Windows | C# | Spotify | Yes | Yes | Free |
+| [SpotRec](https://github.com/Bleuzen/SpotRec) | Linux | Python | Spotify | Yes | No | Free |
+| [Audials Music](https://audials.com/) | Windows | Proprietary | 10+ platforms | Yes | Yes | ~$30 |
+| [Leawo Music Recorder](https://www.leawo.org/music-recorder/) | Win/Mac | Proprietary | 500+ sources | Yes | Yes | $20-30 |
+| [SoundTap](https://www.nch.com.au/soundtap/) | Win/Mac | Proprietary | Any audio | No | No | ~$30 |
+| [Audacity](https://www.audacityteam.org/) + [BlackHole](https://github.com/ExistentialAudio/BlackHole) | All | C++ | Any (manual) | No | No | Free |
+
+RadioTape is the only open-source tool purpose-built for Apple Music with automatic track splitting and tagging.
+
+### DRM circumvention tools (different approach — higher legal risk)
+
+These tools directly decrypt or bypass DRM protection. They offer higher quality and faster downloads but clearly constitute circumvention under DMCA § 1201.
+
+#### Apple Music
+
+| Tool | Language | Approach | Quality | Status |
+|---|---|---|---|---|
+| [gamdl](https://github.com/glomatico/gamdl) | Python | Widevine CDM | AAC 256kbps (ALAC via wrapper) | Active |
+| [AppleMusicDecrypt](https://github.com/WorldObservationLog/AppleMusicDecrypt) | Python | FairPlay decryption via wrapper | ALAC, Atmos, AAC | Active |
+| [apple-music-downloader](https://github.com/zhaarey/apple-music-downloader) | Go | FairPlay via wrapper | ALAC, Atmos, AAC | Active |
+| [Manzana](https://github.com/dropcreations/Manzana-Apple-Music-Downloader) | Python | Widevine CDM (pywidevine) | AAC only | Active |
+| [TuneFab](https://www.tunefab.com/) | Proprietary | Embedded web player capture | AAC 256kbps | Commercial |
+| [NoteBurner](https://www.noteburner.com/) | Proprietary | Virtual recording at 10x speed | AAC 256kbps | Commercial |
+| [DRmare](https://www.drmare.com/) | Proprietary | Embedded web player capture | AAC 256kbps | Commercial |
+
+#### Spotify
+
+| Tool | Language | Approach | Status |
+|---|---|---|---|
+| [spotDL](https://github.com/spotDL/spotify-downloader) | Python | YouTube matching (no DRM bypass) | Active |
+| [Zotify](https://github.com/zotify-dev/zotify) | Python | Librespot stream ripping | Stale (forks active) |
+| [Sidify](https://www.sidify.com/) | Proprietary | Stream capture at 10x speed | Commercial |
+
+#### Tidal / Deezer / Multi-service
+
+| Tool | Language | Services | Approach | Status |
+|---|---|---|---|---|
+| [streamrip](https://github.com/nathom/streamrip) | Python | Qobuz, Tidal, Deezer, SoundCloud | Service APIs | Active |
+| [Deemix](https://github.com/bambanah/deemix) | JS/TS | Deezer | Blowfish CBC decryption | Active (fragile) |
+| [freyr-js](https://github.com/miraclx/freyr-js) | Node.js | Spotify, Apple Music, Deezer | YouTube matching | Active |
+| [OrpheusDL](https://github.com/OrfiTeam/OrpheusDL) | Python | Tidal, Qobuz, Deezer, + plugins | Modular per-service APIs | Stale |
+| [MediaHarbor](https://github.com/MediaHarbor/mediaharbor) | JS/Python | YouTube, Spotify, Apple Music, + | GUI wrapper for CLI tools | Active |
+| [tidal-dl](https://github.com/yaronzz/Tidal-Media-Downloader) | Python | Tidal | Tidal API | Dormant |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Python | 1000+ sites | Public streams (no DRM bypass) | Very active |
+
+#### How they compare
+
+| Approach | Circumvents DRM? | Speed | Quality | Legal risk |
+|---|---|---|---|---|
+| **Loopback recording** (RadioTape) | No | Real-time | AAC 256kbps equivalent | Low |
+| Widevine CDM tools (gamdl, Manzana) | Yes | Fast | AAC 256kbps | High |
+| FairPlay wrapper tools (AppleMusicDecrypt) | Yes | Fast | ALAC lossless, Atmos | High |
+| YouTube matching (spotDL, freyr-js) | No | Fast | Variable (YouTube source) | Low |
+| Commercial converters (TuneFab, Sidify) | Yes (stream capture) | 10-35x | AAC 256kbps | High |
+| Buying CDs & ripping | No | N/A | Lossless | None |
+
 ## License
 
 MIT

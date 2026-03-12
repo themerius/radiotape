@@ -32,8 +32,8 @@ Main Thread          Monitor Thread         Recorder Thread
     ├────────────────────►│ poll Music.app       │
     ├─────────────────────┼─────────────────────►│ sd.InputStream
     │                     │                      │ callback → queue
-    │                     │ track changed!        │
-    │                     │──► event_queue.put()  │
+    │                     │ track changed!       │
+    │                     │──► event_queue.put() │
     │ ◄── event_queue.get()                      │
     │                     │                      │
     │ signal recorder: flush                     │
@@ -46,7 +46,7 @@ Main Thread          Monitor Thread         Recorder Thread
     │ signal recorder: new file                  │
     │──────────────────────────────────────────► │ reset buffer
     │                     │                      │
-   Ctrl+C                │                      │
+    Ctrl+C                │                      │
     │ flush last track    │                      │
     │ print summary       │                      │
     └─────────────────────┴──────────────────────┘

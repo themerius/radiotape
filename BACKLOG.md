@@ -24,6 +24,23 @@ Future improvements beyond the MVP. Ordered roughly by value.
 
 - [ ] **Normalize audio levels** — Optional `--normalize` flag to normalize track loudness (e.g. ReplayGain or simple peak normalization). Useful when recording tracks from different albums in one session.
 
+## macOS App
+
+- [ ] **Native macOS app** — Wrap RadioTape in a native macOS GUI (SwiftUI or PyQt). Goal: make it dead simple — no terminal, no BlackHole setup, no Audio MIDI Setup. One-click record.
+  - **Tech options:**
+    - **SwiftUI + Swift rewrite** — Native feel, App Store distribution possible, but full rewrite
+    - **PyQt/PySide6** — Reuse existing Python code, bundle with py2app or PyInstaller
+    - **Electron** — Web-based UI wrapping the Python CLI (heavier but fastest to build)
+  - **Key UX improvements over CLI:**
+    - Built-in virtual audio routing (no manual Multi-Output Device setup)
+    - Use macOS 14.2+ `AudioHardwareCreateProcessTap` API for per-app capture (no BlackHole needed)
+    - Show current track with artwork, waveform, recording status
+    - Drag-and-drop output files to Finder/iTunes
+    - Menu bar mode (record in background)
+    - Auto-detect Music.app playback, start/stop recording automatically
+  - **Distribution:** Direct download (DMG) or Mac App Store. Notarized with Apple Developer ID.
+
+
 ## Low priority
 
 - [ ] **Genre tagging** — Fetch genre from iTunes Search API and add TCON ID3 frame.

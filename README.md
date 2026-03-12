@@ -39,7 +39,7 @@ brew install uv
 ### Install
 
 ```bash
-git clone https://github.com/simonherold/radiotape.git
+git clone https://github.com/themerius/radiotape.git
 cd radiotape
 uv sync
 ```

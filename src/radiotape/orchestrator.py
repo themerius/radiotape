@@ -143,7 +143,14 @@ class RecordingSession:
         if self._current_track:
             elapsed = time.time() - self._track_start_time
             mins, secs = divmod(int(elapsed), 60)
-            print(f"\r  Recording: {self._current_track.artist} - {self._current_track.name} [{mins}:{secs:02d}]", end="", flush=True)
+            try:
+                cols = os.get_terminal_size().columns
+            except OSError:
+                cols = 80
+            line = f"  Recording: {self._current_track.artist} - {self._current_track.name} [{mins}:{secs:02d}]"
+            if len(line) > cols:
+                line = line[: cols - 1]
+            print(f"\r{line}", end="", flush=True)
 
     def _print_summary(self):
         print(f"\n{'='*50}")

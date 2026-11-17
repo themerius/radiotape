@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from queue import Empty, Queue
 
 import numpy as np
+import sounddevice as sd
 import soundfile as sf
 
 from .encoder import encode_mp3
@@ -102,6 +103,7 @@ class RecordingSession:
             )
         self._recorder.device = device_idx
 
+        self._warn_if_output_not_routed()
         self._recorder.start()
         self._monitor.start()
 
@@ -121,6 +123,17 @@ class RecordingSession:
             self._recorder.stop()
             self._cleanup_tmp()
             self._print_summary()
+
+    def _warn_if_output_not_routed(self):
+        """Warn if the system output doesn't look like it feeds BlackHole."""
+        try:
+            name = sd.query_devices(kind="output")["name"]
+        except Exception:
+            return
+        if not any(k in name.lower() for k in ("multi", "blackhole", "aggregate")):
+            print(f"Warning: system output is '{name}', which doesn't look like a "
+                  f"Multi-Output Device.\n         Recordings will be silent unless audio "
+                  f"is routed to BlackHole (see 'radiotape setup').\n")
 
     # --- event handling -------------------------------------------------------
 
@@ -257,6 +270,8 @@ class RecordingSession:
             return
         # Skip if effectively silent (all below -60 dBFS)
         if np.max(np.abs(audio)) < 0.001:
+            _log(f"  Skipped: {track.name} (no audio captured — is System Settings > Sound > "
+                 f"Output set to the Multi-Output Device?)")
             return
 
         wav_path = os.path.join(self._tmpdir, "current.wav")

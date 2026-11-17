@@ -190,6 +190,9 @@ class RecordingSession:
         elif event.type == "error":
             _log(f"  Warning: {event.message}")
 
+        elif event.type == "info":
+            _log(f"  Note: {event.message}")
+
     def _add_anchor(self, event: TrackEvent):
         p = self._pending
         if p is None or event.anchor_frame is None or event.track.key != p.new_track.key:

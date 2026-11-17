@@ -98,6 +98,7 @@ Run `uv run radiotape record --help` to see all options and their default values
 
 ## Tips & troubleshooting
 
+- **Allow access to Music.app on first run.** macOS asks *"Terminal wants to control Music"* the first time RadioTape queries Music.app (once per terminal app, e.g. Terminal, iTerm, VS Code). Until you answer, queries hang and you'll see `Music.app did not respond within 5s`. Run `radiotape setup` once to trigger the prompt before recording. If you clicked "Don't Allow", re-enable it under System Settings → Privacy & Security → Automation.
 - **Add albums to your library first.** On macOS Tahoe, Music.app scripting may not return metadata for streaming-only tracks. Click "+" or "Add to Library" on the album before recording.
 - **Mute system sounds while recording.** The Multi-Output Device captures *all* system audio — including notification sounds, browser tabs, etc. Close other apps or mute notifications during recording.
 - **Volume keys won't work** when using a Multi-Output Device. Adjust volume per-device in Audio MIDI Setup, or set it once before recording.

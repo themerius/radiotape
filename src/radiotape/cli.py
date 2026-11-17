@@ -39,6 +39,17 @@ def setup():
         print("  BlackHole:  NOT FOUND")
         print("              Install with: brew install blackhole-2ch")
 
+    # Check that we may control Music.app (triggers the macOS Automation prompt on first run)
+    from .monitor import MusicQueryError, query_music
+    try:
+        state = query_music().get("state", "unknown")
+        music_ok = True
+        print(f"  Music.app:  scripting OK (player {state.replace('_', ' ')})")
+    except MusicQueryError as e:
+        music_ok = False
+        print("  Music.app:  NOT ACCESSIBLE")
+        print(f"              {e}")
+
     # Check for Multi-Output Device
     multi_output = any("multi" in d["name"].lower() for d in devices)
 
@@ -46,6 +57,8 @@ def setup():
     if not ffmpeg or not blackhole:
         print("Install missing dependencies first, then run setup again.\n")
         return
+    if not music_ok:
+        print("Allow access to Music.app (see above), then run setup again.\n")
 
     if multi_output:
         print("  Multi-Output Device: found")

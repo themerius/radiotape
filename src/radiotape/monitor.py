@@ -70,7 +70,7 @@ class TrackInfo:
 
 @dataclass
 class TrackEvent:
-    type: str  # "started", "changed", "position", "paused", "resumed", "stopped", "error"
+    type: str  # "started", "changed", "position", "paused", "resumed", "stopped", "error", "info"
     track: TrackInfo = field(default_factory=TrackInfo)
     message: str = ""
     # Audio frame at which this event was observed (poll-based, up to ~1s late).
@@ -82,6 +82,49 @@ class TrackEvent:
 
 # Ignore position readings whose Apple Event round trip took longer than this.
 MAX_POSITION_SPAN = 0.15
+
+# How long a single Music.app query may take before it is abandoned.
+QUERY_TIMEOUT = 5
+
+AUTOMATION_HINT = (
+    "macOS needs permission for your terminal to control Music: answer the "
+    "'… wants to control Music' dialog, or enable it under System Settings → "
+    "Privacy & Security → Automation."
+)
+
+
+class MusicQueryError(Exception):
+    """Music.app could not be queried (timeout, permission denied, …)."""
+
+
+def query_music() -> dict:
+    """Run the JXA query once and return the parsed result.
+
+    Raises MusicQueryError with a short, human-readable reason on failure.
+    """
+    try:
+        result = subprocess.run(
+            ["osascript", "-l", "JavaScript", "-e", JXA_SCRIPT],
+            capture_output=True,
+            text=True,
+            timeout=QUERY_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        raise MusicQueryError(
+            f"Music.app did not respond within {QUERY_TIMEOUT}s. If this is the first run "
+            f"on this Mac, {AUTOMATION_HINT}"
+        ) from None
+
+    if result.returncode != 0:
+        err = result.stderr.strip().splitlines()[-1] if result.stderr.strip() else f"exit code {result.returncode}"
+        if "-1743" in err or "not authorized" in err.lower():
+            raise MusicQueryError(f"Not allowed to control Music.app ({err}). {AUTOMATION_HINT}")
+        raise MusicQueryError(f"Music.app query failed: {err}")
+
+    try:
+        return json.loads(result.stdout.strip())
+    except (json.JSONDecodeError, ValueError):
+        raise MusicQueryError(f"Unexpected reply from Music.app: {result.stdout.strip()[:200]!r}") from None
 
 
 class TrackMonitor:
@@ -100,6 +143,8 @@ class TrackMonitor:
         self._thread: threading.Thread | None = None
         self._last_track: TrackInfo | None = None
         self._last_state: str = ""
+        self._failed_polls = 0
+        self._last_error = ""
 
     def start(self):
         self._thread = threading.Thread(target=self._poll_loop, daemon=True)
@@ -118,23 +163,31 @@ class TrackMonitor:
                 self.event_queue.put(TrackEvent(type="error", message=str(e)))
             self._stop_event.wait(self.poll_interval)
 
+    def _report_failure(self, message: str):
+        """Report a failed query once per distinct reason, not on every poll."""
+        self._failed_polls += 1
+        if message != self._last_error:
+            self._last_error = message
+            self.event_queue.put(TrackEvent(type="error", message=f"{message} Retrying…"))
+
+    def _report_recovery(self):
+        if self._failed_polls:
+            self.event_queue.put(TrackEvent(
+                type="info",
+                message=f"Music.app is responding again (after {self._failed_polls} failed queries).",
+            ))
+        self._failed_polls = 0
+        self._last_error = ""
+
     def _poll_once(self):
-        result = subprocess.run(
-            ["osascript", "-l", "JavaScript", "-e", JXA_SCRIPT],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
+        try:
+            data = query_music()
+        except MusicQueryError as e:
+            self._report_failure(str(e))
+            return
+        self._report_recovery()
 
         detect_frame = self.frame_at(time.time()) if self.frame_at else None
-
-        if result.returncode != 0:
-            return
-
-        try:
-            data = json.loads(result.stdout.strip())
-        except (json.JSONDecodeError, ValueError):
-            return
 
         state = data.get("state", "unknown")
 

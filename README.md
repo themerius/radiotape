@@ -79,6 +79,7 @@ uv run radiotape record --output-dir ~/Music/Kids    # custom output directory
 uv run radiotape record --bitrate 256k               # lower bitrate
 uv run radiotape record --device "BlackHole 2ch"     # specify device
 uv run radiotape record --no-artwork                 # skip artwork fetch
+uv run radiotape record --split-mode poll            # legacy track splitting (fallback)
 ```
 
 Output structure:
@@ -91,7 +92,7 @@ Output structure:
     ...
 ```
 
-Each MP3 is tagged with title, artist, album, track number, and album artwork (fetched from iTunes).
+Folders are named `{Album Artist} - {Album}`, falling back to the track artist when no album artist is set, so tracks with featured artists stay in the album's folder. Each MP3 is tagged with title, artist, album artist, album, track number, and album artwork (fetched from iTunes).
 
 Run `uv run radiotape record --help` to see all options and their default values.
 
@@ -101,7 +102,8 @@ Run `uv run radiotape record --help` to see all options and their default values
 - **Mute system sounds while recording.** The Multi-Output Device captures *all* system audio — including notification sounds, browser tabs, etc. Close other apps or mute notifications during recording.
 - **Volume keys won't work** when using a Multi-Output Device. Adjust volume per-device in Audio MIDI Setup, or set it once before recording.
 - **Switch back to normal output** when done recording. Go to System Settings > Sound > Output and select your regular speakers/headphones.
-- **Track boundaries** are detected by polling Music.app every ~1 second. You may get up to ~0.5s of overlap between tracks — inaudible in practice.
+- **Track boundaries.** Track changes are detected by polling Music.app every ~1 second, but the cut itself is placed using Music.app's playback position (`playerPosition`), mapped onto the recorded audio timeline, then snapped to nearby silence (±150 ms). This gives clean cuts independent of polling latency. If cuts are consistently a little early/late on your setup, shift them with `--cut-offset-ms` (positive = later). If anything goes wrong, `--split-mode poll` restores the old behaviour (cut when the change is noticed, may include up to ~1s of the next track). `--no-snap` disables silence snapping.
+- **Turn off Crossfade** in Music.app (Settings → Playback). With crossfade the tracks overlap in the audio itself, so no cut point can separate them cleanly.
 
 ## Requirements
 

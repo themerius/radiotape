@@ -33,7 +33,7 @@ import soundfile as sf
 from .encoder import encode_mp3
 from .monitor import TrackEvent, TrackInfo, TrackMonitor
 from .recorder import AudioRecorder
-from .tagger import embed_artwork, fetch_artwork, sanitize_filename, tag_mp3
+from .tagger import ArtworkError, embed_artwork, fetch_artwork, sanitize_filename, tag_mp3
 
 # Number of playerPosition readings of the new track to collect before cutting.
 SETTLE_READINGS = 3
@@ -93,6 +93,9 @@ class RecordingSession:
         self._recorded_tracks: list[dict] = []
         self._tmpdir = tempfile.mkdtemp(prefix="radiotape_")
         self._artwork_cache: dict[str, bytes | None] = {}
+        # Files saved while their album's artwork lookup was failing; filled in
+        # once a later lookup for the same album succeeds.
+        self._artwork_missing: dict[str, list[str]] = {}
 
     def run(self):
         """Main recording loop. Blocks until Ctrl+C."""
@@ -301,12 +304,7 @@ class RecordingSession:
 
         # Artwork
         if self.artwork:
-            cache_key = f"{track.folder_artist}|{track.album}"
-            if cache_key not in self._artwork_cache:
-                self._artwork_cache[cache_key] = fetch_artwork(track.name, track.artist)
-            art = self._artwork_cache[cache_key]
-            if art:
-                embed_artwork(mp3_path, art)
+            self._embed_artwork(track, mp3_path)
 
         duration = len(audio) / self._recorder.samplerate
         self._recorded_tracks.append({
@@ -322,6 +320,27 @@ class RecordingSession:
             os.remove(wav_path)
 
         _log(f"  Saved: {filename} ({duration:.1f}s)")
+
+    def _embed_artwork(self, track: TrackInfo, mp3_path: str):
+        """Fetch (cached per album) and embed artwork. Only definitive answers
+        are cached; a failed lookup is reported and retried for the next track."""
+        cache_key = f"{track.folder_artist}|{track.album}"
+        if cache_key not in self._artwork_cache:
+            try:
+                self._artwork_cache[cache_key] = fetch_artwork(track.name, track.artist)
+            except ArtworkError as e:
+                _log(f"  Warning: artwork lookup failed for {track.name} ({e}); will retry on next track")
+                self._artwork_missing.setdefault(cache_key, []).append(mp3_path)
+                return
+            if self._artwork_cache[cache_key] is None:
+                _log(f"  Note: no artwork found for {track.artist} - {track.album}")
+        art = self._artwork_cache[cache_key]
+        if art:
+            embed_artwork(mp3_path, art)
+            for earlier in self._artwork_missing.pop(cache_key, []):
+                if os.path.exists(earlier):
+                    embed_artwork(earlier, art)
+                    _log(f"  Added artwork to earlier track: {os.path.basename(earlier)}")
 
     def _print_status(self):
         if self._current_track:

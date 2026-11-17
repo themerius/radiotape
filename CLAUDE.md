@@ -8,7 +8,8 @@ RadioTape is a Python CLI tool that records Apple Music playback via a virtual a
 
 ```
 src/radiotape/
-├── cli.py          # click CLI entry points: setup, devices, record
+├── cli.py          # click CLI entry points: setup, doctor, devices, record
+├── doctor.py       # read-only environment checks (shared by `doctor` and `setup`)
 ├── recorder.py     # AudioRecorder — sounddevice InputStream → numpy → WAV
 ├── monitor.py      # TrackMonitor — polls Music.app via JXA (osascript)
 ├── orchestrator.py # RecordingSession — wires monitor + recorder + encoder + tagger
@@ -61,7 +62,8 @@ Main Thread          Monitor Thread         Recorder Thread
 ## Key commands
 
 ```bash
-uv run radiotape setup      # check prerequisites
+uv run radiotape setup      # run checks + print one-time setup instructions
+uv run radiotape doctor      # run checks only (exit 1 on failure); play a song to test the signal
 uv run radiotape devices     # list audio devices
 uv run radiotape record      # start recording session
 ```

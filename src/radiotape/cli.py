@@ -1,7 +1,5 @@
 """RadioTape CLI — Record Apple Music like taping from the radio."""
 
-import shutil
-
 import click
 import sounddevice as sd
 
@@ -13,61 +11,46 @@ def cli():
 
 
 @cli.command()
+@click.option("--device", "-d", default="BlackHole 2ch", help="Audio input device name.")
+def doctor(device: str):
+    """Check that everything needed for recording works.
+
+    Read-only: nothing is changed. Checks ffmpeg, BlackHole, the Multi-Output
+    Device, the system sound output, access to Music.app, and (while Music is
+    playing) that audio actually reaches BlackHole. Exits with status 1 if a
+    check fails.
+    """
+    from .doctor import print_checks, run_checks
+
+    print("RadioTape Doctor\n")
+    failed = print_checks(run_checks(device=device))
+    if failed:
+        raise SystemExit(1)
+
+
+@cli.command()
 def setup():
-    """Check prerequisites and print setup instructions."""
-    print("RadioTape Setup Check\n")
+    """Run the doctor checks and print one-time setup instructions."""
+    from .doctor import SETUP_DOCS, print_checks, run_checks
 
-    # Check ffmpeg
-    ffmpeg = shutil.which("ffmpeg")
-    if ffmpeg:
-        print(f"  ffmpeg:     found ({ffmpeg})")
-    else:
-        print("  ffmpeg:     NOT FOUND")
-        print("              Install with: brew install ffmpeg")
-
-    # Check BlackHole
-    devices = sd.query_devices()
-    blackhole = None
-    for i, d in enumerate(devices):
-        if "blackhole" in d["name"].lower() and d["max_input_channels"] >= 2:
-            blackhole = d
-            break
-
-    if blackhole:
-        print(f"  BlackHole:  found ({blackhole['name']}, {int(blackhole['default_samplerate'])} Hz)")
-    else:
-        print("  BlackHole:  NOT FOUND")
-        print("              Install with: brew install blackhole-2ch")
-
-    # Check for Multi-Output Device
-    multi_output = any("multi" in d["name"].lower() for d in devices)
-
+    print("RadioTape Setup\n")
+    print_checks(run_checks())
     print()
-    if not ffmpeg or not blackhole:
-        print("Install missing dependencies first, then run setup again.\n")
-        return
-
-    if multi_output:
-        print("  Multi-Output Device: found")
-    else:
-        print("  Multi-Output Device: NOT FOUND (may have a custom name)")
-
-    print()
-    print("Setup instructions:")
-    print("  1. Open Audio MIDI Setup (Applications > Utilities)")
-    print("  2. Click '+' in the bottom-left, select 'Create Multi-Output Device'")
-    print("  3. Check both 'BlackHole 2ch' and your speakers/headphones")
-    print("  4. Enable 'Drift Correction' for BlackHole 2ch")
-    print("  5. Go to System Settings > Sound > Output")
-    print("  6. Select the Multi-Output Device as output")
+    print("One-time setup:")
+    print("  1. brew install blackhole-2ch ffmpeg")
+    print("  2. Open Audio MIDI Setup (Applications > Utilities)")
+    print("  3. Click '+' in the bottom-left, select 'Create Multi-Output Device'")
+    print("  4. Check both 'BlackHole 2ch' and your speakers/headphones")
+    print("  5. Enable 'Drift Correction' for BlackHole 2ch")
+    print("  6. System Settings > Sound > Output: select the Multi-Output Device")
+    print("  7. Allow your terminal to control Music.app when macOS asks")
     print()
     print("Note: Volume keys don't work with Multi-Output Devices.")
-    print("      Adjust volume in Audio MIDI Setup instead.")
+    print("      Adjust volume in Music.app or Audio MIDI Setup instead.")
     print()
-    print("Full guide: README.md → 'One-time audio setup'")
-    print("            https://github.com/themerius/radiotape#one-time-audio-setup")
+    print(f"Full guide: {SETUP_DOCS}")
     print()
-    print("Then run: radiotape record")
+    print("Re-check any time with: radiotape doctor")
 
 
 @cli.command()

@@ -5,11 +5,13 @@ import re
 import urllib.parse
 import urllib.request
 
-from mutagen.id3 import APIC, ID3, TALB, TIT2, TPE1, TRCK
+from mutagen.id3 import APIC, ID3, TALB, TIT2, TPE1, TPE2, TRCK
 from mutagen.mp3 import MP3
 
 
-def tag_mp3(mp3_path: str, name: str, artist: str, album: str, track_number: int = 0):
+def tag_mp3(
+    mp3_path: str, name: str, artist: str, album: str, track_number: int = 0, album_artist: str = "",
+):
     """Write ID3 tags to an MP3 file."""
     audio = MP3(mp3_path, ID3=ID3)
 
@@ -21,6 +23,8 @@ def tag_mp3(mp3_path: str, name: str, artist: str, album: str, track_number: int
     audio.tags.add(TIT2(encoding=3, text=name))
     audio.tags.add(TPE1(encoding=3, text=artist))
     audio.tags.add(TALB(encoding=3, text=album))
+    if album_artist:
+        audio.tags.add(TPE2(encoding=3, text=album_artist))
     if track_number > 0:
         audio.tags.add(TRCK(encoding=3, text=str(track_number)))
 

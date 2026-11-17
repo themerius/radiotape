@@ -92,7 +92,7 @@ Output structure:
     ...
 ```
 
-Each MP3 is tagged with title, artist, album, track number, and album artwork (fetched from iTunes).
+Folders are named `{Album Artist} - {Album}`, falling back to the track artist when no album artist is set, so tracks with featured artists stay in the album's folder. Each MP3 is tagged with title, artist, album artist, album, track number, and album artwork (fetched from iTunes).
 
 Run `uv run radiotape record --help` to see all options and their default values.
 

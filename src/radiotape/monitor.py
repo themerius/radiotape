@@ -21,6 +21,7 @@ if (!Music.running()) {
                 state: "playing",
                 name: t.name(),
                 artist: t.artist(),
+                albumArtist: t.albumArtist(),
                 album: t.album(),
                 trackNumber: t.trackNumber(),
                 duration: t.duration()
@@ -52,12 +53,19 @@ class TrackInfo:
     name: str = ""
     artist: str = ""
     album: str = ""
+    album_artist: str = ""
     track_number: int = 0
     duration: float = 0.0
 
     @property
     def key(self) -> tuple:
         return (self.name, self.artist, self.album)
+
+    @property
+    def folder_artist(self) -> str:
+        """Album artist if set (keeps albums with featured artists together),
+        otherwise the track artist."""
+        return self.album_artist.strip() or self.artist
 
 
 @dataclass
@@ -159,6 +167,7 @@ class TrackMonitor:
                 name=data.get("name", ""),
                 artist=data.get("artist", ""),
                 album=data.get("album", ""),
+                album_artist=data.get("albumArtist", "") or "",
                 track_number=data.get("trackNumber", 0),
                 duration=data.get("duration", 0.0),
             )

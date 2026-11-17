@@ -283,7 +283,7 @@ class RecordingSession:
         sf.write(wav_path, audio, self._recorder.samplerate)
 
         # Build output path
-        artist_dir = sanitize_filename(track.artist) or "Unknown Artist"
+        artist_dir = sanitize_filename(track.folder_artist) or "Unknown Artist"
         album_dir = sanitize_filename(track.album) or "Unknown Album"
         track_num = f"{track.track_number:02d}" if track.track_number > 0 else "00"
         track_name = sanitize_filename(track.name) or "Unknown Track"
@@ -296,11 +296,12 @@ class RecordingSession:
         encode_mp3(wav_path, mp3_path, self.bitrate)
 
         # Tag
-        tag_mp3(mp3_path, track.name, track.artist, track.album, track.track_number)
+        tag_mp3(mp3_path, track.name, track.artist, track.album, track.track_number,
+                album_artist=track.album_artist.strip())
 
         # Artwork
         if self.artwork:
-            cache_key = f"{track.artist}|{track.album}"
+            cache_key = f"{track.folder_artist}|{track.album}"
             if cache_key not in self._artwork_cache:
                 self._artwork_cache[cache_key] = fetch_artwork(track.name, track.artist)
             art = self._artwork_cache[cache_key]

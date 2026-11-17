@@ -2,6 +2,7 @@
 
 import json
 import re
+import time
 import urllib.parse
 import urllib.request
 
@@ -31,25 +32,41 @@ def tag_mp3(
     audio.save()
 
 
-def fetch_artwork(name: str, artist: str) -> bytes | None:
-    """Fetch album artwork from iTunes Search API. Returns JPEG bytes or None."""
-    try:
-        query = urllib.parse.quote(f"{artist} {name}")
-        url = f"https://itunes.apple.com/search?term={query}&media=music&limit=1"
-        with urllib.request.urlopen(url, timeout=5) as resp:
-            data = json.loads(resp.read())
+class ArtworkError(Exception):
+    """Artwork lookup failed for a transient reason (network, timeout, HTTP error)."""
 
-        if data.get("resultCount", 0) == 0:
-            return None
 
-        artwork_url = data["results"][0].get("artworkUrl100", "")
-        # Get higher resolution
-        artwork_url = artwork_url.replace("100x100", "600x600")
+def fetch_artwork(name: str, artist: str, attempts: int = 2) -> bytes | None:
+    """Fetch album artwork from iTunes Search API.
 
-        with urllib.request.urlopen(artwork_url, timeout=10) as resp:
-            return resp.read()
-    except Exception:
-        return None
+    Returns JPEG bytes, or None if the API has no artwork for this track.
+    Raises ArtworkError if the lookup failed (after retrying), so callers can
+    report it and try again later instead of treating it as "no artwork".
+    """
+    last_error: Exception | None = None
+    for attempt in range(attempts):
+        if attempt:
+            time.sleep(1)
+        try:
+            query = urllib.parse.quote(f"{artist} {name}")
+            url = f"https://itunes.apple.com/search?term={query}&media=music&limit=1"
+            with urllib.request.urlopen(url, timeout=10) as resp:
+                data = json.loads(resp.read())
+
+            if data.get("resultCount", 0) == 0:
+                return None
+
+            artwork_url = data["results"][0].get("artworkUrl100", "")
+            if not artwork_url:
+                return None
+            # Get higher resolution
+            artwork_url = artwork_url.replace("100x100", "600x600")
+
+            with urllib.request.urlopen(artwork_url, timeout=10) as resp:
+                return resp.read()
+        except Exception as e:
+            last_error = e
+    raise ArtworkError(f"{type(last_error).__name__}: {last_error}")
 
 
 def embed_artwork(mp3_path: str, artwork_data: bytes):

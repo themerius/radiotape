@@ -42,6 +42,8 @@ SNAP_WINDOW_S = 0.15
 # Block size and threshold for silence detection while snapping.
 SNAP_BLOCK_S = 0.01
 SNAP_SILENCE_RMS = 10 ** (-50 / 20)  # -50 dBFS
+# Where the BlackHole / Multi-Output Device setup is documented.
+SETUP_DOCS = "README.md → 'One-time audio setup' (https://github.com/themerius/radiotape#one-time-audio-setup)"
 # While idle (nothing playing), keep only this much audio buffered.
 IDLE_KEEP_S = 30
 
@@ -132,8 +134,10 @@ class RecordingSession:
             return
         if not any(k in name.lower() for k in ("multi", "blackhole", "aggregate")):
             print(f"Warning: system output is '{name}', which doesn't look like a "
-                  f"Multi-Output Device.\n         Recordings will be silent unless audio "
-                  f"is routed to BlackHole (see 'radiotape setup').\n")
+                  f"Multi-Output Device.\n"
+                  f"         Recordings will be silent unless audio is routed to BlackHole.\n"
+                  f"         Setup guide: {SETUP_DOCS}\n"
+                  f"         Check with:  radiotape setup\n")
 
     # --- event handling -------------------------------------------------------
 
@@ -271,7 +275,8 @@ class RecordingSession:
         # Skip if effectively silent (all below -60 dBFS)
         if np.max(np.abs(audio)) < 0.001:
             _log(f"  Skipped: {track.name} (no audio captured — is System Settings > Sound > "
-                 f"Output set to the Multi-Output Device?)")
+                 f"Output set to the Multi-Output Device?)\n"
+                 f"           Setup guide: {SETUP_DOCS}")
             return
 
         wav_path = os.path.join(self._tmpdir, "current.wav")

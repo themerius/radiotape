@@ -64,6 +64,9 @@ def setup():
     print("Note: Volume keys don't work with Multi-Output Devices.")
     print("      Adjust volume in Audio MIDI Setup instead.")
     print()
+    print("Full guide: README.md → 'One-time audio setup'")
+    print("            https://github.com/themerius/radiotape#one-time-audio-setup")
+    print()
     print("Then run: radiotape record")
 
 

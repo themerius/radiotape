@@ -4,7 +4,7 @@ Future improvements beyond the MVP. Ordered roughly by value.
 
 ## High priority
 
-- [ ] **Silence trimming** — Trim leading/trailing silence from each track after recording. Use numpy threshold detection (~-50 dBFS). Add `--no-trim` flag. Addresses the ~0.5s track boundary overlap from polling latency.
+- [ ] **Silence trimming** — Trim leading/trailing silence from each track after recording. Use numpy threshold detection (~-50 dBFS). Add `--no-trim` flag. (Boundary overlap from polling latency is already solved by `--split-mode position`; this is now purely cosmetic.)
 
 - [ ] **Pause handling** — When Music.app pauses, stop buffering silence. When it resumes, continue recording seamlessly. Currently pause periods are included in the recording as silence.
 

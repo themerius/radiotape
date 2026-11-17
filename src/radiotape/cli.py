@@ -83,7 +83,33 @@ def devices():
 @click.option("--device", "-d", default="BlackHole 2ch", help="Audio input device name.")
 @click.option("--bitrate", "-b", default="320k", help="MP3 bitrate (e.g. 128k, 256k, 320k).")
 @click.option("--no-artwork", is_flag=True, help="Skip fetching album artwork.")
-def record(output_dir: str, device: str, bitrate: str, no_artwork: bool):
+@click.option(
+    "--split-mode",
+    type=click.Choice(["position", "poll"]),
+    default="position",
+    show_default=True,
+    help="How track boundaries are found. 'position' uses Music.app's playback "
+    "position for exact cuts; 'poll' cuts when the change is noticed (legacy, "
+    "may include up to ~1s of the next track).",
+)
+@click.option(
+    "--cut-offset-ms",
+    type=float,
+    default=0.0,
+    show_default=True,
+    help="Shift cut points (position mode). Positive = later. Use to compensate "
+    "for audio routing latency.",
+)
+@click.option("--no-snap", is_flag=True, help="Don't snap cut points to nearby silence (position mode).")
+def record(
+    output_dir: str,
+    device: str,
+    bitrate: str,
+    no_artwork: bool,
+    split_mode: str,
+    cut_offset_ms: float,
+    no_snap: bool,
+):
     """Start recording from Apple Music.
 
     Play music in Apple Music and RadioTape will automatically split
@@ -96,6 +122,9 @@ def record(output_dir: str, device: str, bitrate: str, no_artwork: bool):
         device=device,
         bitrate=bitrate,
         artwork=not no_artwork,
+        split_mode=split_mode,
+        cut_offset_ms=cut_offset_ms,
+        snap=not no_snap,
     )
 
     try:

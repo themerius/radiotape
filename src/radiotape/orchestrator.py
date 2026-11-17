@@ -30,6 +30,7 @@ import numpy as np
 import sounddevice as sd
 import soundfile as sf
 
+from .doctor import SETUP_DOCS, output_looks_routed
 from .encoder import encode_mp3
 from .monitor import TrackEvent, TrackInfo, TrackMonitor
 from .recorder import AudioRecorder
@@ -42,8 +43,6 @@ SNAP_WINDOW_S = 0.15
 # Block size and threshold for silence detection while snapping.
 SNAP_BLOCK_S = 0.01
 SNAP_SILENCE_RMS = 10 ** (-50 / 20)  # -50 dBFS
-# Where the BlackHole / Multi-Output Device setup is documented.
-SETUP_DOCS = "README.md → 'One-time audio setup' (https://github.com/themerius/radiotape#one-time-audio-setup)"
 # While idle (nothing playing), keep only this much audio buffered.
 IDLE_KEEP_S = 30
 
@@ -101,7 +100,7 @@ class RecordingSession:
         if device_idx is None:
             raise RuntimeError(
                 f"Audio device '{self._recorder.device}' not found. "
-                f"Run 'radiotape setup' to check prerequisites."
+                f"Run 'radiotape doctor' to check your setup."
             )
         self._recorder.device = device_idx
 
@@ -132,12 +131,12 @@ class RecordingSession:
             name = sd.query_devices(kind="output")["name"]
         except Exception:
             return
-        if not any(k in name.lower() for k in ("multi", "blackhole", "aggregate")):
+        if not output_looks_routed(name):
             print(f"Warning: system output is '{name}', which doesn't look like a "
                   f"Multi-Output Device.\n"
                   f"         Recordings will be silent unless audio is routed to BlackHole.\n"
                   f"         Setup guide: {SETUP_DOCS}\n"
-                  f"         Check with:  radiotape setup\n")
+                  f"         Check with:  radiotape doctor\n")
 
     # --- event handling -------------------------------------------------------
 

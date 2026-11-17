@@ -61,9 +61,40 @@ uv sync
 You can verify your setup:
 
 ```bash
-uv run radiotape setup    # checks all prerequisites
+uv run radiotape setup    # first time: runs all checks + prints these setup steps
+uv run radiotape doctor   # any time: runs all checks (play a song first to test the signal)
 uv run radiotape devices  # lists audio devices
 ```
+
+### Checking your setup with `radiotape doctor`
+
+`doctor` checks everything a recording depends on and tells you how to fix what's wrong. It only reads and never changes settings. (The one side effect: on first use, macOS may ask whether your terminal may control Music. That's intended, so the question doesn't pop up mid-recording.)
+
+```
+RadioTape Doctor
+
+  ✔ ffmpeg               /opt/homebrew/bin/ffmpeg
+  ✔ BlackHole            BlackHole 2ch (48000 Hz)
+  ✔ Multi-Output Device  Multi-Output Device
+  ✘ System output        'MacBook Pro Speakers' — audio does not reach BlackHole
+                         → System Settings → Sound → Output: select the Multi-Output Device
+  ✔ Music.app access     OK — playing: Interactive Noise – Angels
+  ✘ Audio signal         Music.app is playing but BlackHole receives silence
+                         → Route the system output through the Multi-Output Device (see 'System output')
+```
+
+| Check | What it verifies |
+|---|---|
+| ffmpeg | `ffmpeg` is installed (needed for MP3 encoding) |
+| BlackHole | A BlackHole input device exists and runs at 48 kHz |
+| Multi-Output Device | A Multi-Output (or Aggregate) Device exists |
+| System output | macOS sound output goes to the Multi-Output Device / BlackHole, not directly to your speakers |
+| Music.app access | RadioTape may control Music.app (macOS Automation permission) |
+| Audio signal | Records 1.5 s from BlackHole: audio arrives while Music plays, and the level isn't too low. **Start a song before running `doctor`**, otherwise this check is skipped |
+
+`✔` = OK, `!` = warning, `✘` = problem, `–` = skipped. `doctor` exits with status 1 if any check fails.
+
+`setup` runs the same checks and then prints the one-time setup steps above.
 
 ### Record
 
@@ -98,7 +129,9 @@ Run `uv run radiotape record --help` to see all options and their default values
 
 ## Tips & troubleshooting
 
-- **Allow access to Music.app on first run.** macOS asks *"Terminal wants to control Music"* the first time RadioTape queries Music.app (once per terminal app, e.g. Terminal, iTerm, VS Code). Until you answer, queries hang and you'll see `Music.app did not respond within 5s`. Run `radiotape setup` once to trigger the prompt before recording. If you clicked "Don't Allow", re-enable it under System Settings → Privacy & Security → Automation.
+- **Something doesn't work? Run `radiotape doctor` while a song is playing.** It checks routing, permissions and the actual signal, and says what to fix.
+
+- **Allow access to Music.app on first run.** macOS asks *"Terminal wants to control Music"* the first time RadioTape queries Music.app (once per terminal app, e.g. Terminal, iTerm, VS Code). Until you answer, queries hang and you'll see `Music.app did not respond within 5s`. Run `radiotape doctor` (or `setup`) once to trigger the prompt before recording. If you clicked "Don't Allow", re-enable it under System Settings → Privacy & Security → Automation.
 - **Add albums to your library first.** On macOS Tahoe, Music.app scripting may not return metadata for streaming-only tracks. Click "+" or "Add to Library" on the album before recording.
 - **Mute system sounds while recording.** The Multi-Output Device captures *all* system audio — including notification sounds, browser tabs, etc. Close other apps or mute notifications during recording.
 - **Volume keys won't work** when using a Multi-Output Device. Adjust volume per-device in Audio MIDI Setup, or set it once before recording.
